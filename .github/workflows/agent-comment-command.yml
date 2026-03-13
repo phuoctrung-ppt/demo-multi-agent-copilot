@@ -1,0 +1,53 @@
+name: agent-comment-command
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  run:
+    if: startsWith(github.event.comment.body, '/agent ')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract goal
+        id: goal
+        run: |
+          body="${{ github.event.comment.body }}"
+          goal="${body#"/agent "}"
+          echo "goal=$goal" > $GITHUB_OUTPUT
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "latest"
+
+      - name: Install
+        run: bun install
+
+      - name: Run agent (mock by default)
+        env:
+          AGENT_GOAL: ${{ steps.goal.outputs.goal }}
+          AGENT_BASE_BRANCH: main
+          AGENT_MAX_ITERS: "4"
+          AGENT_MODE: mock
+          AGENT_CREATE_PR: "true"
+          GH_TOKEN: ${{ github.token }}
+        run: bun run agent
+
+      - name: Comment result
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
+            -f body="Agent run finished. Check Actions logs for branch/PR details."
