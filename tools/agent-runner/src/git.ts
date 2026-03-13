@@ -27,6 +27,22 @@ export async function currentDiff() {
   return await sh("git diff");
 }
 
+export async function applyPatch(patchPath: string): Promise<void> {
+  // Check the patch before applying it
+  const checkResult = await $`git apply --check ${patchPath}`.quiet().nothrow();
+  if (checkResult.exitCode !== 0) {
+    throw new Error(`Patch check failed: ${checkResult.stderr.toString()}`);
+  }
+
+  // Apply the patch
+  const applyResult = await $`git apply ${patchPath}`.quiet().nothrow();
+  if (applyResult.exitCode !== 0) {
+    throw new Error(`Patch application failed: ${applyResult.stderr.toString()}`);
+  }
+
+  console.info(`Patch applied successfully: ${patchPath}`);
+}
+
 export async function applyUnifiedDiff(diff: string) {
   if (!diff.includes("diff --git")) throw new Error("Diff does not look like unified diff (missing 'diff --git').");
   if (diff.length > 250_000) throw new Error("Diff too large (>250k chars).");
