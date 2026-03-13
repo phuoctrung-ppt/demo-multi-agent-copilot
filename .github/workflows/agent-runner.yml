@@ -1,0 +1,40 @@
+name: agent-runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      goal:
+        description: "Goal for the agent"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "latest"
+
+      - name: Install
+        run: bun install
+
+      - name: Run agent (mock by default)
+        env:
+          AGENT_GOAL: ${{ inputs.goal }}
+          AGENT_BASE_BRANCH: main
+          AGENT_MAX_ITERS: "4"
+          AGENT_MODE: mock
+          AGENT_CREATE_PR: "true"
+          GH_TOKEN: ${{ github.token }}
+        run: bun run agent

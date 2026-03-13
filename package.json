@@ -1,0 +1,12 @@
+{
+  "name": "demo-multi-agent-copilot",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "agent": "bun run tools/agent-runner/src/index.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "zod": "^3.25.76"
+  }
+}
